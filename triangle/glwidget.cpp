@@ -4,7 +4,9 @@
 
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-
+    m_vertices << QVector3D( 0.0f,  0.5f, 1.0f)
+               << QVector3D( 0.5f, -0.5f, 1.0f)
+               << QVector3D(-0.5f, -0.5f, 1.0f);
 }
 
 void GLWidget::initializeGL()
@@ -35,14 +37,13 @@ void GLWidget::initializeGL()
     m_vertex.create();
     m_vertex.bind();
     m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_vertex.allocate(m_vertices, sizeof(m_vertices));
+    m_vertex.allocate(m_vertices.constData(), m_vertices.size() * sizeof(QVector3D));
 
     m_object.create();
     m_object.bind();
 
-    m_vertexLocation  = m_program->attributeLocation("qt_Vertex");
-    m_program->enableAttributeArray(m_vertexLocation);
-    m_program->setAttributeBuffer(m_vertexLocation, GL_FLOAT, Vertex::positionOffset(), 3, Vertex::stride());
+    m_program->enableAttributeArray("qt_Vertex");
+    m_program->setAttributeBuffer("qt_Vertex", GL_FLOAT, 0, 3);
 
     m_object.release();
     m_vertex.release();
@@ -54,13 +55,15 @@ void GLWidget::initializeGL()
 void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-
+    auto vertexColor = QVector3D(1.0f, 1.0f, 1.0f);
     m_program->bind();
     m_object.bind();
 
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(m_vertices) / sizeof(m_vertices[0]));
+    int colorLocation = m_program->uniformLocation("qt_Color");
+    m_program->setUniformValue(colorLocation, vertexColor);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, m_vertices.size());
 
     m_object.release();
     m_program->release();
-
 }
