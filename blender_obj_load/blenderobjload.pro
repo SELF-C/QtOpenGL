@@ -16,15 +16,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    blender.cpp \
     glwidget.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    blender.h \
     glwidget.h \
-    mainwindow.h
+    mainwindow.h \
+    wavefrontobj.h
 
 FORMS += \
     mainwindow.ui

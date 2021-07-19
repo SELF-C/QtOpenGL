@@ -1,6 +1,7 @@
-#ifndef BLENDER_H
-#define BLENDER_H
+#ifndef WAVEFRONTOBJ_H
+#define WAVEFRONTOBJ_H
 
+#include <QOpenGLFunctions>
 #include <QString>
 #include <QFile>
 #include <QTextStream>
@@ -9,27 +10,37 @@
 #include <QVector3D>
 #include <QDebug>
 
-class Blender
+class WavefrontOBJ
 {
 public:
-    Blender();
+    WavefrontOBJ(){}
 
-    //bool loadObj(const QString &path, QVector<QVector3D> vertices, QVector<QVector2D> uvs, QVector<QVector3D> normals)
-    bool loadObj(const QString &path)
+    bool load(const QString &path,
+              QVector<QVector3D>& vertices, QVector<GLushort>& vertexIndices,
+              QVector<QVector2D> &uvs, QVector<GLushort> &uvIndices,
+              QVector<QVector3D> &normals, QVector<GLushort> &normalIndices)
     {
         if (!QFile::exists(path))
+        {
+            m_errorMsg = "File does not exist";
             return false;
+        }
 
-        auto lines = openObj(path);
-
+        auto lines = open(path);
         if (lines.empty())
+        {
+            m_errorMsg = "No 3D geometry data";
             return false;
+        }
 
-        QVector<QVector3D> vertices, normals;
-        QVector<QVector2D> uvs;
+
+        QVector<QVector3D> tempVertices, tempNormals;
+        QVector<QVector2D> tempUvs;
+
+
         foreach (QString line, lines) {
 
-            if (line.left(2) == "v ")        // Vertex
+            if (line.left(2) == "v ")       // Vertex
             {
                 QStringList split = line.split(" ");
                 vertices.append(QVector3D(split[1].toFloat(), split[2].toFloat(), split[3].toFloat()));
@@ -49,50 +60,42 @@ public:
                 QStringList split = line.split(" ");
                 QStringList indices;
 
-                /* triangul 1*/
-                indices = split[1].split("/");
-                m_vertexIndices->append(indices[0].toInt());
-                m_uvIndices->append(indices[1].toInt());
-                m_normalIndices->append(indices[2].toInt());
+                // 配列の0番目の要素はデータタイプなのでスキップ
+                for (int i = 1; i < split.size(); i++) {
+                    indices = split[i].split("/");
+                    if ( !vertices.empty())
+                    {
+                        vertexIndices.append(static_cast<GLushort>(indices[0].toInt() - 1));
+                    }
 
-                /* triangul 2*/
-                indices = split[2].split("/");
-                m_vertexIndices->append(indices[0].toInt());
-                m_uvIndices->append(indices[1].toInt());
-                m_normalIndices->append(indices[2].toInt());
+                    if ( !uvs.empty())
+                    {
+                        uvIndices.append(static_cast<GLushort>(indices[1].toInt() - 1));
+                    }
 
-                /* triangul 2*/
-                indices = split[3].split("/");
-                m_vertexIndices->append(indices[0].toInt());
-                m_uvIndices->append(indices[1].toInt());
-                m_normalIndices->append(indices[2].toInt());
+                    if ( !normals.empty())
+                    {
+                        normalIndices.append(static_cast<GLushort>(indices[2].toInt() - 1));
+                    }
+                }
             }
-
         }
-
-        qDebug() << vertices;
-        qDebug() << uvs;
-        qDebug() << normals;
-        qDebug() << m_vertexIndices->toList();
-        qDebug() << m_uvIndices;
-        qDebug() << m_normalIndices;
 
         return true;
     }
 
+    QString errorMessage(){ return m_errorMsg; }
+
 private:
-    QVector<int> m_vertexIndices[3];
-    QVector<int> m_uvIndices[3];
-    QVector<int> m_normalIndices[3];
+    QString m_errorMsg;
 
-
-    QList<QString> openObj(const QString &filename)
+    QList<QString> open(const QString &filename)
     {
         QList<QString> lines;
 
         QFile file(filename);
         if (! file.open(QIODevice::ReadOnly)) {
-            qDebug() << file.errorString();
+            m_errorMsg = file.errorString();
             return lines;
         }
 
@@ -107,4 +110,4 @@ private:
 
 };
 
-#endif // BLENDER_H
+#endif // WAVEFRONTOBJ_H

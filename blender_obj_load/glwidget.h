@@ -9,7 +9,7 @@
 #include <QMatrix4x4>
 #include <QVector3D>
 #include <QMouseEvent>
-#include "blender.h"
+#include "wavefrontobj.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -31,6 +31,7 @@ protected:
 private:
     QVector<QVector3D> m_vertices;
     QVector<QVector3D> m_colors;
+    QVector<GLushort> m_indices;
 
     QMatrix4x4 m_projection;
 
@@ -38,6 +39,8 @@ private:
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_color;
+    QOpenGLBuffer m_index;
+
 
     /* Camera */
     QVector2D m_cameraAngle;

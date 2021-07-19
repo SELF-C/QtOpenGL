@@ -1,40 +1,27 @@
 ﻿#include "glwidget.h"
 
-
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-    m_vertices << QVector3D(-0.5, -0.5,  0.5) << QVector3D( 0.5, -0.5,  0.5) << QVector3D( 0.5,  0.5,  0.5) // Front
-               << QVector3D( 0.5,  0.5,  0.5) << QVector3D(-0.5,  0.5,  0.5) << QVector3D(-0.5, -0.5,  0.5)
-               << QVector3D( 0.5, -0.5, -0.5) << QVector3D(-0.5, -0.5, -0.5) << QVector3D(-0.5,  0.5, -0.5) // Back
-               << QVector3D(-0.5,  0.5, -0.5) << QVector3D( 0.5,  0.5, -0.5) << QVector3D( 0.5, -0.5, -0.5)
-               << QVector3D(-0.5, -0.5, -0.5) << QVector3D(-0.5, -0.5,  0.5) << QVector3D(-0.5,  0.5,  0.5) // Left
-               << QVector3D(-0.5,  0.5,  0.5) << QVector3D(-0.5,  0.5, -0.5) << QVector3D(-0.5, -0.5, -0.5)
-               << QVector3D( 0.5, -0.5,  0.5) << QVector3D( 0.5, -0.5, -0.5) << QVector3D( 0.5,  0.5, -0.5) // Right
-               << QVector3D( 0.5,  0.5, -0.5) << QVector3D( 0.5,  0.5,  0.5) << QVector3D( 0.5, -0.5,  0.5)
-               << QVector3D(-0.5,  0.5,  0.5) << QVector3D( 0.5,  0.5,  0.5) << QVector3D( 0.5,  0.5, -0.5) // Top
-               << QVector3D( 0.5,  0.5, -0.5) << QVector3D(-0.5,  0.5, -0.5) << QVector3D(-0.5,  0.5,  0.5)
-               << QVector3D(-0.5, -0.5, -0.5) << QVector3D( 0.5, -0.5, -0.5) << QVector3D( 0.5, -0.5,  0.5) // Bottom
-               << QVector3D( 0.5, -0.5,  0.5) << QVector3D(-0.5, -0.5,  0.5) << QVector3D(-0.5, -0.5, -0.5);
+    auto* wavefrontObj = new WavefrontOBJ();
 
-    m_colors << QVector3D(1.0f, 0.0f, 0.0f) << QVector3D(1.0f, 0.0f, 0.0f) << QVector3D(1.0f, 0.0f, 0.0f) // Front
-             << QVector3D(1.0f, 0.0f, 0.0f) << QVector3D(1.0f, 0.0f, 0.0f) << QVector3D(1.0f, 0.0f, 0.0f)
-             << QVector3D(1.0f, 0.0f, 1.0f) << QVector3D(1.0f, 0.0f, 1.0f) << QVector3D(1.0f, 0.0f, 1.0f) // Back
-             << QVector3D(1.0f, 0.0f, 1.0f) << QVector3D(1.0f, 0.0f, 1.0f) << QVector3D(1.0f, 0.0f, 1.0f)
-             << QVector3D(0.0f, 1.0f, 0.0f) << QVector3D(0.0f, 1.0f, 0.0f) << QVector3D(0.0f, 1.0f, 0.0f) // Left
-             << QVector3D(0.0f, 1.0f, 0.0f) << QVector3D(0.0f, 1.0f, 0.0f) << QVector3D(0.0f, 1.0f, 0.0f)
-             << QVector3D(1.0f, 1.0f, 0.0f) << QVector3D(1.0f, 1.0f, 0.0f) << QVector3D(1.0f, 1.0f, 0.0f) // Right
-             << QVector3D(1.0f, 1.0f, 0.0f) << QVector3D(1.0f, 1.0f, 0.0f) << QVector3D(1.0f, 1.0f, 0.0f)
-             << QVector3D(0.0f, 0.0f, 1.0f) << QVector3D(0.0f, 0.0f, 1.0f) << QVector3D(0.0f, 0.0f, 1.0f) // Top
-             << QVector3D(0.0f, 0.0f, 1.0f) << QVector3D(0.0f, 0.0f, 1.0f) << QVector3D(0.0f, 0.0f, 1.0f)
-             << QVector3D(0.0f, 1.0f, 1.0f) << QVector3D(0.0f, 1.0f, 1.0f) << QVector3D(0.0f, 1.0f, 1.0f) // Bottom
-             << QVector3D(0.0f, 1.0f, 1.0f) << QVector3D(0.0f, 1.0f, 1.0f) << QVector3D(0.0f, 1.0f, 1.0f);
+    QVector<QVector3D> normals;
+    QVector<QVector2D> uvs;
+    QVector<GLushort> uvIndices;
+    QVector<GLushort> normalIndices;
 
+
+    //wavefrontObj->load(":/cube.obj", m_vertices, m_indices, uvs, uvIndices, normals, normalIndices);
+
+    m_vertices << QVector3D(-1, 0, 1) << QVector3D(1, 0, 1) << QVector3D(-1, 0, -1) << QVector3D(1, 0, -1);
+    m_indices << 2 << 3 << 1 << 2 << 1 << 0;
 
     m_cameraAngle = QVector2D(20.0, -20.0);
     m_cameraDistance = 2.5f;
 
-    auto* blender = new Blender();
-    blender->loadObj(":/qube.obj");
+    qDebug() << m_vertices.toList();
+    qDebug() << m_indices.toList();
+    qDebug() << m_vertices.size();
+    qDebug() << m_indices.size();
 }
 
 
@@ -42,9 +29,10 @@ void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
+
     /* enabled */
     glEnable(GL_DEPTH_TEST);    // Enable depth buffer
-    glEnable(GL_CULL_FACE); // Enable back face culling
+    //glEnable(GL_CULL_FACE); // Enable back face culling
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -73,11 +61,19 @@ void GLWidget::initializeGL()
     m_vao.bind();
 
     // 頂点情報をVBOに転送する
+    m_vertex = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     m_vertex.create();
     m_vertex.bind();
     m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
     m_vertex.allocate(m_vertices.constData(), m_vertices.size() * static_cast<int>(sizeof(QVector3D)));
     m_vertex.release();
+
+    m_index = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    m_index.create();
+    m_index.bind();
+    //m_index.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    m_index.allocate(m_indices.constData(), m_indices.size() * static_cast<int>(sizeof(GLushort)));
+    m_index.release();
 
     // 色情報をVBOに転送する
     m_color.create();
@@ -90,9 +86,13 @@ void GLWidget::initializeGL()
     m_shaderProgram->bind();
 
     m_vertex.bind();
+    m_index.bind();
     m_shaderProgram->enableAttributeArray("qt_Vertex");
     m_shaderProgram->setAttributeBuffer("qt_Vertex", GL_FLOAT, 0, 3);
-    m_vertex.release();
+
+
+
+
 
     m_color.bind();
     m_shaderProgram->enableAttributeArray("qt_Color");
@@ -104,7 +104,8 @@ void GLWidget::initializeGL()
 
     m_shaderProgram->release();
     m_vao.release();
-
+m_index.release();
+m_vertex.release();
 }
 
 
@@ -133,7 +134,7 @@ void GLWidget::paintGL()
     m_shaderProgram->setUniformValue("qt_ModelViewProjectionMatrix", m_projection * viewMatrix * modelMatrix);
 
     m_vao.bind();
-    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
+    glDrawElements(GL_TRIANGLE_STRIP, m_vertices.size(), GL_UNSIGNED_SHORT, nullptr);
     m_vao.release();
 
     m_shaderProgram->release();

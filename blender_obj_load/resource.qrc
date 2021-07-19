@@ -2,6 +2,6 @@
     <qresource prefix="/">
         <file>shader.frag</file>
         <file>shader.vert</file>
-        <file>qube.obj</file>
+        <file>cube.obj</file>
     </qresource>
 </RCC>
