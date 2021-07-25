@@ -26,6 +26,9 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event);
+
+
 
 private:
     QVector<QVector3D> m_vertices;
@@ -41,6 +44,9 @@ private:
     QVector2D m_cameraAngle;
     float m_cameraDistance;
 
+    int m_angle;
+    float m_scale;
+    float m_translate;
 
     QPoint m_mousePosition;
 

@@ -19,6 +19,10 @@ GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
     m_cameraAngle = QVector2D(20.0, -20.0);
     m_cameraDistance = 2.5f;
 
+    m_angle = 0;
+    m_scale = 1;
+    m_translate = 0;
+    parent->installEventFilter(this);
 }
 
 
@@ -95,6 +99,9 @@ void GLWidget::paintGL()
 
     /* Model Matrix */
     QMatrix4x4 modelMatrix;
+    modelMatrix.translate(QVector3D(m_translate, 0.0f, 0.0f));
+    modelMatrix.rotate(m_angle, QVector3D(0.0f, 1.0f, 0.0f));
+    modelMatrix.scale(m_scale);
 
     /* Draw */
     m_program->bind();
@@ -152,6 +159,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
         update();
     }
 
+
     m_mousePosition = event->pos();
 
     event->accept();
@@ -174,4 +182,41 @@ void GLWidget::wheelEvent(QWheelEvent *event)
     }
     event->accept();
 
+}
+
+bool GLWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    switch(event->type())
+        {
+        case QEvent::KeyPress:
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_A)
+            {
+                m_angle += 5;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_D)
+            {
+                m_angle -= 5;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_W)
+            {
+                m_scale += 0.1;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_S)
+            {
+                m_scale -= 0.1;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_Q)
+            {
+                m_translate += 0.1;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_E)
+            {
+                m_translate -= 0.1;
+            }
+            update();
+            break;
+        default:
+            break;
+        }
+        return false;
 }
