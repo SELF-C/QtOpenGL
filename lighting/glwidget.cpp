@@ -54,6 +54,7 @@ void GLWidget::paintGL()
     m_mesh->setRotation(m_angle.x(), m_angle.y(), m_angle.z());
     m_mesh->setScale(m_scale);
     m_mesh->draw(m_projection, viewMatrix);
+
 }
 
 
@@ -168,6 +169,6 @@ bool GLWidget::eventFilter(QObject *obj, QEvent *event)
     default:
         break;
     }
-    qDebug() << m_angle;
+
     return false;
 }

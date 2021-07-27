@@ -4,14 +4,21 @@ Mesh::Mesh()
 {
     initializeOpenGLFunctions();
 
-    // メッシュデータの設定
+    // メッシュデータの初期設定
     setRotation(0.0f, 0.0f, 0.0f);
     setTranslation(0.0f, 0.0f, 0.0f);
     setScale(1.0f);
 
-    setLightPostion(-25.0f, 25.0f, 25.0f);
-    setKd(1.0f, 1.0f, 1.0f);
-    setLd(1.0f, 1.0f, 1.0f);
+    // ライティングの初期設定
+    setLight(QVector4D(-25.0f, 25.0f, 25.0f, 1.0f),
+             QVector3D(0.3f, 0.3f, 0.3f),
+             QVector3D(1.0f, 1.0f, 1.0f),
+             QVector3D(1.0f, 1.0f, 1.0f));
+
+    setMaterial(QVector3D(1.0f, 1.0f, 1.0f),
+                QVector3D(1.0f, 1.0f, 1.0f),
+                QVector3D(1.0f, 1.0f, 1.0f),
+                100.0f);
 }
 
 bool Mesh::load(const QString &filename)
@@ -90,21 +97,26 @@ void Mesh::bufferInit()
     m_shaderProgram->bind();
 
     m_vertex.bind();
-    m_shaderProgram->enableAttributeArray("qt_Vertex");
-    m_shaderProgram->setAttributeBuffer("qt_Vertex", GL_FLOAT, 0, 3);
+    m_shaderProgram->enableAttributeArray("VertexPosition");
+    m_shaderProgram->setAttributeBuffer("VertexPosition", GL_FLOAT, 0, 3);
     m_vertex.release();
 
     m_normal.bind();
-    m_shaderProgram->enableAttributeArray("qt_Normal");
-    m_shaderProgram->setAttributeBuffer("qt_Normal", GL_FLOAT, 0, 3);
+    m_shaderProgram->enableAttributeArray("VertexNormal");
+    m_shaderProgram->setAttributeBuffer("VertexNormal", GL_FLOAT, 0, 3);
     m_normal.release();
 
-    m_shaderProgram->enableAttributeArray("qt_LightPosition");
-    m_shaderProgram->enableAttributeArray("qt_Kd");
-    m_shaderProgram->enableAttributeArray("qt_Ld");
-    m_shaderProgram->enableAttributeArray("qt_ModelViewMatrix");
-    m_shaderProgram->enableAttributeArray("qt_NormalMatrix");
-    m_shaderProgram->enableAttributeArray("qt_ModelViewProjectionMatrix");
+    m_shaderProgram->enableAttributeArray("Light.Position");
+    m_shaderProgram->enableAttributeArray("Light.La");
+    m_shaderProgram->enableAttributeArray("Light.Ld");
+    m_shaderProgram->enableAttributeArray("Light.Ls");
+    m_shaderProgram->enableAttributeArray("Material.Ka");
+    m_shaderProgram->enableAttributeArray("Material.Kd");
+    m_shaderProgram->enableAttributeArray("Material.Ks");
+    m_shaderProgram->enableAttributeArray("Material.Shininess");
+    m_shaderProgram->enableAttributeArray("ModelViewMatrix");
+    m_shaderProgram->enableAttributeArray("NormalMatrix");
+    m_shaderProgram->enableAttributeArray("MVP");
 
     m_shaderProgram->release();
     m_vao.release();
@@ -118,15 +130,21 @@ void Mesh::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatrix
     modelMatrix.rotate(m_rotation);
     modelMatrix.scale(m_scale);
 
-    /* Draw */
+    // set uniform
     m_shaderProgram->bind();
-    m_shaderProgram->setUniformValue("qt_LightPosition", m_lightPosition);
-    m_shaderProgram->setUniformValue("qt_Kd", m_kd);
-    m_shaderProgram->setUniformValue("qt_Ld", m_ld);
-    m_shaderProgram->setUniformValue("qt_ModelViewMatrix", viewMatrix * modelMatrix);
-    m_shaderProgram->setUniformValue("qt_NormalMatrix", modelMatrix.normalMatrix());
-    m_shaderProgram->setUniformValue("qt_ModelViewProjectionMatrix", projectionMatrix * viewMatrix * modelMatrix);
+    m_shaderProgram->setUniformValue("Light.Position", m_light.Position);
+    m_shaderProgram->setUniformValue("Light.La", m_light.La);
+    m_shaderProgram->setUniformValue("Light.Ld", m_light.Ld);
+    m_shaderProgram->setUniformValue("Light.Ls", m_light.Ls);
+    m_shaderProgram->setUniformValue("Material.Ka", m_material.Ka);
+    m_shaderProgram->setUniformValue("Material.Kd", m_material.Kd);
+    m_shaderProgram->setUniformValue("Material.Ks", m_material.Ks);
+    m_shaderProgram->setUniformValue("Material.Shininess", m_material.Shininess);
+    m_shaderProgram->setUniformValue("ModelViewMatrix", viewMatrix * modelMatrix);
+    m_shaderProgram->setUniformValue("NormalMatrix", modelMatrix.normalMatrix());
+    m_shaderProgram->setUniformValue("MVP", projectionMatrix * viewMatrix * modelMatrix);
 
+    // Draw
     m_vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
     m_vao.release();
@@ -152,17 +170,18 @@ void Mesh::setScale(float s)
     m_scale = s;
 }
 
-void Mesh::setLightPostion(float x, float y, float z)
+void Mesh::setLight(QVector4D position, QVector3D La, QVector3D Ld, QVector3D Ls)
 {
-    m_lightPosition = QVector4D(x, y, z, 1.0f);
+    m_light.Position = position;
+    m_light.La = La;
+    m_light.Ld = Ld;
+    m_light.Ls = Ls;
 }
 
-void Mesh::setKd(float r, float g, float b)
+void Mesh::setMaterial(QVector3D Ka, QVector3D Kd, QVector3D Ks, float shininess)
 {
-    m_kd = QVector3D(r, g, b);
-}
-
-void Mesh::setLd(float r, float g, float b)
-{
-    m_ld = QVector3D(r, g, b);
+    m_material.Ka = Ka;
+    m_material.Kd = Kd;
+    m_material.Ks = Ks;
+    m_material.Shininess = shininess;
 }

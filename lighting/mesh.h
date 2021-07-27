@@ -11,6 +11,20 @@
 #include <QString>
 #include "wavefrontobj.h"
 
+struct Light {
+    QVector4D Position; // 視点座標でのライトの位置
+    QVector3D La;       // アンビエント ライト強度
+    QVector3D Ld;       // アンビエント ライト強度
+    QVector3D Ls;       // スペキュラ ライト強度
+};
+
+struct Material {
+    QVector3D Ka;       // アンビエント 反射率
+    QVector3D Kd;       // ディフューズ 反射率
+    QVector3D Ks;       // スペキュラ 反射率
+    float Shininess;    // スペキュラ 輝き係数
+};
+
 class Mesh : protected QOpenGLFunctions
 {
 public:
@@ -23,9 +37,8 @@ public:
     void setRotation(float angleX, float angleY, float angleZ);
     void setTranslation(float x, float y, float z);
     void setScale(float s);
-    void setLightPostion(float x, float y, float z);
-    void setKd(float r, float g, float b);
-    void setLd(float r, float g, float b);
+    void setLight(QVector4D position, QVector3D La, QVector3D Ld, QVector3D Ls);
+    void setMaterial(QVector3D Ka, QVector3D Kd, QVector3D Ks, float shininess);
 
 private:
     // shader
@@ -47,9 +60,8 @@ private:
     float m_scale;
 
     // Lighting
-    QVector4D m_lightPosition;
-    QVector3D m_kd;
-    QVector3D m_ld;
+    Light m_light;
+    Material m_material;
 
     void shaderInit(const QString &vertexShaderFile, const QString &fragmentShaderFile);
     void bufferInit();
