@@ -2,26 +2,34 @@
 
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-    auto* wavefrontObj = new WavefrontOBJ();
+    // メッシュの読み込み
+    QVector<Triangle3D> triangles;
+    QStringList comments;
+    WavefrontOBJ().parser(":/cube.obj", comments, triangles);
 
-    QVector<QVector3D> normals;
-    QVector<QVector2D> uvs;
-    QVector<GLushort> uvIndices;
-    QVector<GLushort> normalIndices;
+    m_vertices.clear();
+    m_normals.clear();
 
+    for(int i = 0; i < triangles.count(); i++)
+    {
+        m_vertices.append(triangles.at(i).p1);
+        m_vertices.append(triangles.at(i).p2);
+        m_vertices.append(triangles.at(i).p3);
 
-    //wavefrontObj->load(":/cube.obj", m_vertices, m_indices, uvs, uvIndices, normals, normalIndices);
+        m_normals.append(triangles.at(i).p1Normal);
+        m_normals.append(triangles.at(i).p2Normal);
+        m_normals.append(triangles.at(i).p3Normal);
+    }
 
-    m_vertices << QVector3D(-1, 0, 1) << QVector3D(1, 0, 1) << QVector3D(-1, 0, -1) << QVector3D(1, 0, -1);
-    m_indices << 2 << 3 << 1 << 2 << 1 << 0;
-
+    // カメラ設定
     m_cameraAngle = QVector2D(20.0, -20.0);
     m_cameraDistance = 2.5f;
 
-    qDebug() << m_vertices.toList();
-    qDebug() << m_indices.toList();
-    qDebug() << m_vertices.size();
-    qDebug() << m_indices.size();
+    // メッシュデータの設定
+    m_angle = 0;
+    m_scale = 1;
+    m_translate = 0;
+    parent->installEventFilter(this);
 }
 
 
@@ -29,10 +37,12 @@ void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-
     /* enabled */
     glEnable(GL_DEPTH_TEST);    // Enable depth buffer
-    //glEnable(GL_CULL_FACE); // Enable back face culling
+    glEnable(GL_CULL_FACE); // Enable back face culling
+
+    //const float pos[] = {100, 100, 512, 0};
+    //glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -68,44 +78,47 @@ void GLWidget::initializeGL()
     m_vertex.allocate(m_vertices.constData(), m_vertices.size() * static_cast<int>(sizeof(QVector3D)));
     m_vertex.release();
 
-    m_index = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    m_index.create();
-    m_index.bind();
-    //m_index.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_index.allocate(m_indices.constData(), m_indices.size() * static_cast<int>(sizeof(GLushort)));
-    m_index.release();
-
     // 色情報をVBOに転送する
-    m_color.create();
-    m_color.bind();
-    m_color.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_color.allocate(m_colors.constData(), m_colors.size() * static_cast<int>(sizeof(QVector3D)));
-    m_color.release();
+//    m_color.create();
+//    m_color.bind();
+//    m_color.setUsagePattern(QOpenGLBuffer::StaticDraw);
+//    m_color.allocate(m_colors.constData(), m_colors.size() * static_cast<int>(sizeof(QVector3D)));
+//    m_color.release();
+
+    m_normal.create();
+    m_normal.bind();
+    m_normal.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    m_normal.allocate(m_normals.constData(), m_normals.size() * static_cast<int>(sizeof(QVector3D)));
+    m_normal.release();
 
     // VBOをVAOに紐づける
     m_shaderProgram->bind();
 
     m_vertex.bind();
-    m_index.bind();
     m_shaderProgram->enableAttributeArray("qt_Vertex");
     m_shaderProgram->setAttributeBuffer("qt_Vertex", GL_FLOAT, 0, 3);
+    m_vertex.release();
 
+//    m_color.bind();
+//    m_shaderProgram->enableAttributeArray("qt_Color");
+//    m_shaderProgram->setAttributeBuffer("qt_Color", GL_FLOAT, 0, 3);
+//    m_color.release();
 
+    m_normal.bind();
+    m_shaderProgram->enableAttributeArray("qt_Normal");
+    m_shaderProgram->setAttributeBuffer("qt_Normal", GL_FLOAT, 0, 3);
+    m_normal.release();
 
-
-
-    m_color.bind();
-    m_shaderProgram->enableAttributeArray("qt_Color");
-    m_shaderProgram->setAttributeBuffer("qt_Color", GL_FLOAT, 0, 3);
-    m_color.release();
-
+    m_shaderProgram->enableAttributeArray("qt_LightPosition");
+    m_shaderProgram->enableAttributeArray("qt_Kd");
+    m_shaderProgram->enableAttributeArray("qt_Ld");
+    m_shaderProgram->enableAttributeArray("qt_ModelViewMatrix");
+    m_shaderProgram->enableAttributeArray("qt_NormalMatrix");
     m_shaderProgram->enableAttributeArray("qt_ModelViewProjectionMatrix");
-
 
     m_shaderProgram->release();
     m_vao.release();
-m_index.release();
-m_vertex.release();
+
 }
 
 
@@ -129,12 +142,27 @@ void GLWidget::paintGL()
     /* Model Matrix */
     QMatrix4x4 modelMatrix;
 
+    QQuaternion rotation =
+            QQuaternion::fromAxisAndAngle(QVector3D(0,0,1), 0) *
+            QQuaternion::fromAxisAndAngle(QVector3D(1,0,0), 0) *
+            QQuaternion::fromAxisAndAngle(QVector3D(0,1,0), m_angle);
+
+
+    modelMatrix.translate(QVector3D(0.0f, 0.0f, m_translate));
+    modelMatrix.rotate(rotation);
+    modelMatrix.scale(m_scale);
+
     /* Draw */
     m_shaderProgram->bind();
+    m_shaderProgram->setUniformValue("qt_LightPosition", QVector4D(-25,25,25,1));
+    m_shaderProgram->setUniformValue("qt_Kd", QVector3D(1,1,1));
+    m_shaderProgram->setUniformValue("qt_Ld", QVector3D(1,1,1));
+    m_shaderProgram->setUniformValue("qt_ModelViewMatrix", viewMatrix * modelMatrix);
+    m_shaderProgram->setUniformValue("qt_NormalMatrix", modelMatrix.normalMatrix());
     m_shaderProgram->setUniformValue("qt_ModelViewProjectionMatrix", m_projection * viewMatrix * modelMatrix);
 
     m_vao.bind();
-    glDrawElements(GL_TRIANGLE_STRIP, m_vertices.size(), GL_UNSIGNED_SHORT, nullptr);
+    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
     m_vao.release();
 
     m_shaderProgram->release();
@@ -144,7 +172,7 @@ void GLWidget::paintGL()
 void GLWidget::resizeGL(int w, int h)
 {
     float aspect = float(w) / float(h ? h : 1);
-    const float zNear = 0.001f, zFar = 1000, fov = 60.0;
+    const float zNear = 0.1f, zFar = 1000, fov = 60.0;
 
     m_projection.setToIdentity();
     m_projection.perspective(fov, aspect, zNear, zFar);
@@ -205,4 +233,42 @@ void GLWidget::wheelEvent(QWheelEvent *event)
     }
     event->accept();
 
+}
+
+bool GLWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    switch(event->type())
+    {
+        case QEvent::KeyPress:
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_A)
+            {
+                m_angle += 5;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_D)
+            {
+                m_angle -= 5;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_W)
+            {
+                m_translate += 0.1f;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_S)
+            {
+                m_translate -= 0.1f;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_Q)
+            {
+                m_scale -= 0.1f;
+            }
+            if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_E)
+            {
+                m_scale += 0.1f;
+            }
+            update();
+            break;
+        default:
+            break;
+    }
+
+    return false;
 }

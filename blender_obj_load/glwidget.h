@@ -27,9 +27,11 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event);
 
 private:
     QVector<QVector3D> m_vertices;
+    QVector<QVector3D> m_normals;
     QVector<QVector3D> m_colors;
     QVector<GLushort> m_indices;
 
@@ -39,6 +41,7 @@ private:
     QOpenGLVertexArrayObject m_vao;
     QOpenGLBuffer m_vertex;
     QOpenGLBuffer m_color;
+    QOpenGLBuffer m_normal;
     QOpenGLBuffer m_index;
 
 
@@ -46,9 +49,12 @@ private:
     QVector2D m_cameraAngle;
     float m_cameraDistance;
 
-
     QPoint m_mousePosition;
 
+    int m_angle;
+    float m_scale;
+    float m_translate;
+    float m_pz;
 };
 
 #endif // GLWIDGET_H
