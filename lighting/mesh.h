@@ -1,7 +1,6 @@
-#ifndef MESH_H
+﻿#ifndef MESH_H
 #define MESH_H
 
-#include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLShader>
 #include <QOpenGLBuffer>
@@ -29,6 +28,7 @@ class Mesh : protected QOpenGLFunctions
 {
 public:
     explicit Mesh();
+    ~Mesh();
 
     bool load(const QString &filename);
     void bind(const QString &vertexShader, const QString &fragmentShader);

@@ -1,7 +1,6 @@
-#ifndef WAVEFRONTOBJ_H
+﻿#ifndef WAVEFRONTOBJ_H
 #define WAVEFRONTOBJ_H
 
-#include <QOpenGLFunctions>
 #include <QString>
 #include <QFile>
 #include <QVector>
@@ -15,7 +14,6 @@ struct Triangle3D
     QVector3D p1, p2, p3;
     QVector3D p2Normal, p1Normal, p3Normal;
     QVector2D p1UV, p2UV, p3UV;
-    QVector<GLushort> vertexIndices, uvIndices, normalIndices;
 };
 
 class WavefrontOBJ

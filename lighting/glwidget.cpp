@@ -126,6 +126,8 @@ void GLWidget::wheelEvent(QWheelEvent *event)
 
 bool GLWidget::eventFilter(QObject *obj, QEvent *event)
 {
+    (void) obj;
+
     float deltaY = 5.0f;
 
     switch(event->type()){

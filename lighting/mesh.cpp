@@ -1,4 +1,4 @@
-#include "mesh.h"
+﻿#include "mesh.h"
 #include "QDebug"
 Mesh::Mesh()
 {
@@ -19,6 +19,15 @@ Mesh::Mesh()
                 QVector3D(1.0f, 1.0f, 1.0f),
                 QVector3D(1.0f, 1.0f, 1.0f),
                 100.0f);
+}
+
+Mesh::~Mesh()
+{
+    // And now release all OpenGL resources
+    delete m_shaderProgram;
+    m_vao.destroy();
+    m_vertex.destroy();
+    m_normal.destroy();
 }
 
 bool Mesh::load(const QString &filename)
