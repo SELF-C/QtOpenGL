@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shader.frag</file>
+        <file>shader.vert</file>
+        <file>gridline.frag</file>
+        <file>gridline.vert</file>
+        <file>model.obj</file>
+    </qresource>
+</RCC>
