@@ -17,12 +17,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     glwidget.cpp \
+    gridline.cpp \
     main.cpp \
     mainwindow.cpp \
     mesh.cpp
 
 HEADERS += \
     glwidget.h \
+    gridline.h \
     mainwindow.h \
     mesh.h \
     wavefrontobj.h

@@ -11,6 +11,7 @@
 #include <QMouseEvent>
 #include "wavefrontobj.h"
 #include "mesh.h"
+#include "gridline.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -38,6 +39,7 @@ private:
 
     QPoint m_mousePosition;
 
+    GridLine* m_gridline;
     Mesh* m_mesh;
     QVector3D m_angle;
     QVector3D m_translation;

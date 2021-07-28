@@ -20,10 +20,17 @@ void GLWidget::initializeGL()
     initializeOpenGLFunctions();
 
     /* enabled */
-    glEnable(GL_DEPTH_TEST);    // Enable depth buffer
-    glEnable(GL_CULL_FACE); // Enable back face culling
+    glEnable(GL_DEPTH_TEST);        // Zバッファ
+    glEnable(GL_CULL_FACE);         // カリング
+    glEnable(GL_LINE_SMOOTH);       // アンチエイリアス(線)
+    glEnable(GL_POLYGON_SMOOTH );   // アンチエイリアス(ポリゴン)
+    glEnable(GL_BLEND);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    QColor c(60, 60, 60);
+    glClearColor(c.red() / 255.0f, c.green() / 255.0f, c.blue() / 255.0f, 1.0f);
+
+    m_gridline = new GridLine();
+    m_gridline->bind(":/gridline.vert", ":/gridline.frag");
 
     m_mesh = new Mesh();
     if (!m_mesh->load(":/Monkey.obj"))
@@ -35,6 +42,9 @@ void GLWidget::initializeGL()
 void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     /* View Matrix */
     QMatrix4x4 camera;  // カメラを原点に沿って回転させる
@@ -42,12 +52,15 @@ void GLWidget::paintGL()
     camera.rotate(m_cameraAngle.y(), QVector3D(1.0f, 0.0f, 0.0f));
 
     auto eye = camera * QVector3D(0.0f, 0.0f, m_cameraDistance);  // 仮想3Dカメラが配置されているポイント
-    auto center = camera * QVector3D(0.0f, 0.0f, 0.0f);              // カメラが注視するポイント（シーンの中心）
-    auto up = camera * QVector3D(0.0f, 1.0f, 0.0f);                  // 3Dワールドの上方向を定義
+    auto center = camera * QVector3D(0.0f, 0.0f, 0.0f);           // カメラが注視するポイント（シーンの中心）
+    auto up = camera * QVector3D(0.0f, 1.0f, 0.0f);               // 3Dワールドの上方向を定義
 
     QMatrix4x4 viewMatrix;
     viewMatrix.lookAt(eye, center, up);
 
+
+    // グリッド線を描画
+    m_gridline->draw(m_projection, viewMatrix);
 
     // Mesh draw
     m_mesh->setTranslation(m_translation.x(), m_translation.y(), m_translation.z());
@@ -126,7 +139,7 @@ void GLWidget::wheelEvent(QWheelEvent *event)
 
 bool GLWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    (void) obj;
+    (void) obj; // 未使用引数の警告をださない
 
     float deltaY = 5.0f;
 

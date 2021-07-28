@@ -16,8 +16,8 @@ Mesh::Mesh()
              QVector3D(1.0f, 1.0f, 1.0f));
 
     setMaterial(QVector3D(1.0f, 1.0f, 1.0f),
-                QVector3D(1.0f, 1.0f, 1.0f),
-                QVector3D(1.0f, 1.0f, 1.0f),
+                QVector3D(0.8f, 0.8f, 0.8f),
+                QVector3D(0.8f, 0.8f, 0.8f),
                 100.0f);
 }
 
@@ -95,7 +95,7 @@ void Mesh::bufferInit()
     m_vertex.allocate(m_vertices.constData(), m_vertices.size() * static_cast<int>(sizeof(QVector3D)));
     m_vertex.release();
 
-    // 色情報をVBOに転送する
+    // 法線情報をVBOに転送する
     m_normal.create();
     m_normal.bind();
     m_normal.setUsagePattern(QOpenGLBuffer::StaticDraw);

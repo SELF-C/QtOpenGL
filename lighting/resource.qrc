@@ -3,5 +3,7 @@
         <file>shader.frag</file>
         <file>shader.vert</file>
         <file>Monkey.obj</file>
+        <file>gridline.frag</file>
+        <file>gridline.vert</file>
     </qresource>
 </RCC>
