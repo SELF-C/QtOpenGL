@@ -1,26 +1,25 @@
 #ifndef GRIDLINE_H
 #define GRIDLINE_H
 
-#include <QOpenGLFunctions>
-#include <QOpenGLShader>
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QMatrix4x4>
-#include <QVector3D>
 #include <QColor>
+#include "model.h"
 
+enum GridColor
+{
+    Blender,
+    Metasequoia,
+    Unity,
+    UnrealEngine,
+};
 
-
-class GridLine : protected QOpenGLFunctions
+class GridLine : public Model
 {
 public:
     GridLine();
-    ~GridLine();
 
-    void draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatrix);
-    void bind(const QString &vertexShader, const QString &fragmentShader);
-
+    void draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatrix) override;
     void setColor(int red, int green, int blue);
+    void setColor(GridColor gridcolor);
 
 private:
     struct Axis
@@ -37,17 +36,6 @@ private:
         QVector3D axisZ;
     };
 
-    // shader
-    QOpenGLShaderProgram* m_shaderProgram;
-
-    // mesh data
-    QVector<QVector3D> m_vertices;
-    QVector<QVector3D> m_verticesAxisX;
-
-    // buffer
-    QOpenGLVertexArrayObject m_vao;
-    QOpenGLBuffer m_vertex;
-
     // grid
     float m_width;
     float m_gap;
@@ -55,8 +43,7 @@ private:
     Axis m_axisX;
     Axis m_axisZ;
 
-    void shaderInit(const QString &vertexShaderFile, const QString &fragmentShaderFile);
-    void bufferInit();
+    void bufferInit() override;
     void gemGridLine();
 
 };

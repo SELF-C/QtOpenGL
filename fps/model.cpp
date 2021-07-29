@@ -3,6 +3,22 @@
 
 Model::Model()
 {
+    initialize();
+}
+
+Model::~Model()
+{
+    // And now release all OpenGL resources
+    delete m_shaderProgram;
+    m_vao->destroy();
+    delete m_vao;
+    m_vertex.destroy();
+    m_normal.destroy();
+    m_uv.destroy();
+}
+
+void Model::initialize()
+{
     initializeOpenGLFunctions();
 
     // メッシュデータの初期設定
@@ -20,30 +36,24 @@ Model::Model()
                 QVector3D(0.8f, 0.8f, 0.8f),
                 QVector3D(0.8f, 0.8f, 0.8f),
                 100.0f);
-}
 
-Model::~Model()
-{
-    // And now release all OpenGL resources
-    delete m_shaderProgram;
-    m_vao.destroy();
-    m_vertex.destroy();
-    m_normal.destroy();
+    m_shaderProgram = new QOpenGLShaderProgram();
+    m_vao = new QOpenGLVertexArrayObject();
 }
 
 bool Model::load(const QString &filename)
 {
-    // メッシュの読み込み
     QVector<Triangle3D> triangles;
     QStringList comments;
+
+    // objファイルの読み込み
     if (!WavefrontOBJ().parser(filename, comments, triangles))
         return false;
 
     m_vertices.clear();
     m_normals.clear();
+    m_uvs.clear();
     m_comments.clear();
-
-    m_comments = comments;
 
     for(int i = 0; i < triangles.count(); i++)
     {
@@ -55,6 +65,7 @@ bool Model::load(const QString &filename)
         m_normals.append(triangles.at(i).p2Normal);
         m_normals.append(triangles.at(i).p3Normal);
     }
+    m_comments = comments;
 
     return true;
 }
@@ -67,29 +78,21 @@ void Model::bind(const QString &vertexShader, const QString &fragmentShader)
 
 void Model::shaderInit(const QString &vertexShaderFile, const QString &fragmentShaderFile)
 {
-    m_shaderProgram = new QOpenGLShaderProgram();
-
     // Compile shader
-    Q_ASSERT(m_shaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, vertexShaderFile));
-    Q_ASSERT(m_shaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, fragmentShaderFile));
+    m_shaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, vertexShaderFile);
+    m_shaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, fragmentShaderFile);
 
     // Link shader pipeline
-    Q_ASSERT(m_shaderProgram->link());
-
-    // Bind shader pipeline for use
-    Q_ASSERT(m_shaderProgram->bind());
-
-    m_shaderProgram->release();
+    m_shaderProgram->link();
 }
 
 void Model::bufferInit()
 {
     /* VAO */
-    m_vao.create();
-    m_vao.bind();
+    m_vao->create();
+    m_vao->bind();
 
     // 頂点情報をVBOに転送する
-    m_vertex = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     m_vertex.create();
     m_vertex.bind();
     m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
@@ -129,16 +132,16 @@ void Model::bufferInit()
     m_shaderProgram->enableAttributeArray("MVP");
 
     m_shaderProgram->release();
-    m_vao.release();
+    m_vao->release();
 }
 
 void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatrix)
 {
     /* Model Matrix */
     QMatrix4x4 modelMatrix;
-    modelMatrix.translate(m_translation);
-    modelMatrix.rotate(m_rotation);
-    modelMatrix.scale(m_scale);
+    modelMatrix.translate(m_transform.translation);
+    modelMatrix.rotate(m_transform.rotation);
+    modelMatrix.scale(m_transform.scale);
 
     // set uniform
     m_shaderProgram->bind();
@@ -155,16 +158,16 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
     m_shaderProgram->setUniformValue("MVP", projectionMatrix * viewMatrix * modelMatrix);
 
     // Draw
-    m_vao.bind();
+    m_vao->bind();
     glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
-    m_vao.release();
+    m_vao->release();
 
     m_shaderProgram->release();
 }
 
 void Model::setRotation(float angleX, float angleY, float angleZ)
 {
-    m_rotation =
+    m_transform.rotation =
             QQuaternion::fromAxisAndAngle(QVector3D(0,0,1), angleZ) *
             QQuaternion::fromAxisAndAngle(QVector3D(1,0,0), angleX) *
             QQuaternion::fromAxisAndAngle(QVector3D(0,1,0), angleY);
@@ -172,12 +175,12 @@ void Model::setRotation(float angleX, float angleY, float angleZ)
 
 void Model::setTranslation(float x, float y, float z)
 {
-    m_translation = QVector3D(x, y, z);
+    m_transform.translation = QVector3D(x, y, z);
 }
 
 void Model::setScale(float s)
 {
-    m_scale = s;
+    m_transform.scale = s;
 }
 
 void Model::setLight(QVector4D position, QVector3D La, QVector3D Ld, QVector3D Ls)
@@ -195,3 +198,94 @@ void Model::setMaterial(QVector3D Ka, QVector3D Kd, QVector3D Ks, float shinines
     m_material.Ks = Ks;
     m_material.Shininess = shininess;
 }
+
+QOpenGLShaderProgram *Model::getShaderProgram() const
+{
+    return m_shaderProgram;
+}
+
+void Model::setShaderProgram(QOpenGLShaderProgram *shaderProgram)
+{
+    m_shaderProgram = shaderProgram;
+}
+
+QOpenGLVertexArrayObject* Model::getVao() const
+{
+    return m_vao;
+}
+
+void Model::setVao(QOpenGLVertexArrayObject *vao)
+{
+    m_vao = vao;
+}
+
+QVector<QVector3D> Model::getVertices() const
+{
+    return m_vertices;
+}
+
+void Model::setVertices(const QVector<QVector3D> &vertices)
+{
+    m_vertices = vertices;
+}
+
+QVector<QVector3D> Model::getNormals() const
+{
+    return m_normals;
+}
+
+void Model::setNormals(const QVector<QVector3D> &normals)
+{
+    m_normals = normals;
+}
+
+QVector<QVector2D> Model::getUvs() const
+{
+    return m_uvs;
+}
+
+void Model::setUvs(const QVector<QVector2D> &uvs)
+{
+    m_uvs = uvs;
+}
+
+QStringList Model::getComments() const
+{
+    return m_comments;
+}
+
+void Model::setComments(const QStringList &comments)
+{
+    m_comments = comments;
+}
+
+QOpenGLBuffer Model::getVertex() const
+{
+    return m_vertex;
+}
+
+void Model::setVertex(const QOpenGLBuffer &vertex)
+{
+    m_vertex = vertex;
+}
+
+QOpenGLBuffer Model::getNormal() const
+{
+    return m_normal;
+}
+
+void Model::setNormal(const QOpenGLBuffer &normal)
+{
+    m_normal = normal;
+}
+
+QOpenGLBuffer Model::getUv() const
+{
+    return m_uv;
+}
+
+void Model::setUv(const QOpenGLBuffer &uv)
+{
+    m_uv = uv;
+}
+

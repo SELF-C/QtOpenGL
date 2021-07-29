@@ -10,9 +10,11 @@
 #include <QVector3D>
 #include <QMouseEvent>
 #include <QtMath>
+#include <QLabel>
 #include "wavefrontobj.h"
 #include "model.h"
 #include "gridline.h"
+#include "fpsmanager.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -24,6 +26,7 @@ protected:
     void initializeGL() override;
     void paintGL() override;
     void resizeGL(int w, int h) override;
+    void updateGL();
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -32,7 +35,18 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
-    QMatrix4x4 m_projection;
+    struct DebugInfo
+    {
+        QLabel* fps;
+        QLabel* translation;
+        QLabel* rotation;
+        QLabel* scale;
+        QLabel* mouse;
+    };
+
+
+    QMatrix4x4 m_projectionMatrix;
+    QMatrix4x4 m_viewMatrix;
 
     /* Camera */
     QVector2D m_cameraAngle;
@@ -46,6 +60,13 @@ private:
     QVector3D m_translation;
     float m_scale;
 
+    FpsManager* m_fps;
+
+    // Debug
+    DebugInfo m_info;
+
+    void debugInfoInit();
+    void debugInfoUpdate();
 };
 
 #endif // GLWIDGET_H

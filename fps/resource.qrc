@@ -4,6 +4,6 @@
         <file>shader.vert</file>
         <file>gridline.frag</file>
         <file>gridline.vert</file>
-        <file>model.obj</file>
+        <file>test_model.obj</file>
     </qresource>
 </RCC>
