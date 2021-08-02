@@ -10,31 +10,39 @@
 #include <QString>
 #include "wavefrontobj.h"
 
-struct Transform {
-    QQuaternion rotation;
-    QVector3D translation;
-    float scale;
-};
-
-struct Light
-{
-    QVector4D Position; // 視点座標でのライトの位置
-    QVector3D La;       // アンビエント ライト強度
-    QVector3D Ld;       // アンビエント ライト強度
-    QVector3D Ls;       // スペキュラ ライト強度
-};
-
-struct Material
-{
-    QVector3D Ka;       // アンビエント 反射率
-    QVector3D Kd;       // ディフューズ 反射率
-    QVector3D Ks;       // スペキュラ 反射率
-    float Shininess;    // スペキュラ 輝き係数
-};
-
 class Model : protected QOpenGLFunctions
 {
 public:
+    struct VertexBufferObject
+    {
+        QOpenGLBuffer vertex;
+        QOpenGLBuffer normal;
+        QOpenGLBuffer uv;
+    };
+
+    struct Transform
+    {
+        QQuaternion rotation;
+        QVector3D translation;
+        float scale;
+    };
+
+    struct Light
+    {
+        QVector4D Position; // 視点座標でのライトの位置
+        QVector3D La;       // アンビエント ライト強度
+        QVector3D Ld;       // アンビエント ライト強度
+        QVector3D Ls;       // スペキュラ ライト強度
+    };
+
+    struct Material
+    {
+        QVector3D Ka;       // アンビエント 反射率
+        QVector3D Kd;       // ディフューズ 反射率
+        QVector3D Ks;       // スペキュラ 反射率
+        float Shininess;    // スペキュラ 輝き係数
+    };
+
     explicit Model();
     virtual ~Model();
 
@@ -48,6 +56,9 @@ public:
     virtual void setScale(float s);
     virtual void setLight(QVector4D position, QVector3D La, QVector3D Ld, QVector3D Ls);
     virtual void setMaterial(QVector3D Ka, QVector3D Kd, QVector3D Ks, float shininess);
+
+    Light getLight() const;
+    Material getMaterial() const;
 
     QOpenGLShaderProgram *getShaderProgram() const;
     void setShaderProgram(QOpenGLShaderProgram *shaderProgram);
@@ -92,9 +103,7 @@ private:
 
     // buffer
     QOpenGLVertexArrayObject* m_vao;
-    QOpenGLBuffer m_vertex;
-    QOpenGLBuffer m_normal;
-    QOpenGLBuffer m_uv;
+    VertexBufferObject m_vbo;
 
     // transform
     Transform m_transform;
