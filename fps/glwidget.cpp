@@ -1,26 +1,12 @@
 ﻿#include "glwidget.h"
-
+#include <QTimer>
 GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-
-    // デバッグビルド時のみデバッグ情報の初期化をする
-//#ifdef QT_DEBUG
-    //debugInfoInit();
-    //qDebug() << "QT_DEBUG";
-//#endif
-
-
-    // FPS
-    //m_fps = new FpsManager();
-
-    // Camera
-    m_cameraAngle = QVector2D(20.0, -20.0);
-    m_cameraDistance = 2.5f;
-
-    // Model Transform
-    m_translation = QVector3D(0.0f, 0.0f, 0.0f);
-    m_angle = QVector3D(0.0f, 0.0f, 0.0f);
-    m_scale = 1;
+    QSurfaceFormat format;
+    format.setVersion(4,0);
+    format.setDepthBufferSize(24);
+    format.setSamples(4);
+    QSurfaceFormat::setDefaultFormat(format);
 
     // eventFilterをGLWidgetに反映させる
     parent->installEventFilter(this);
@@ -52,6 +38,23 @@ void GLWidget::initializeGL()
     if (!m_model->load(":/test_model.obj"))
         close();
     m_model->bind(":/shader.vert", ":/shader.frag");
+
+    // Camera
+    m_cameraAngle = QVector2D(20.0, -20.0);
+    m_cameraDistance = 2.5f;
+
+    // Model Transform
+    m_translation = QVector3D(0.0f, 0.0f, 0.0f);
+    m_angle = QVector3D(0.0f, 0.0f, 0.0f);
+    m_scale = 1;
+
+    // FPS
+    m_fps = new FpsManager();
+
+    // デバッグビルド時のみデバッグ情報の初期化をする
+#ifdef QT_DEBUG
+    debugInfoInit();
+#endif
 }
 
 
@@ -84,10 +87,13 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::updateGL()
 {
-    //m_fps->frameRateCalculator();
-//#ifdef _DEBUG
-    //debugInfoUpdate();
-//#endif
+#ifdef QT_DEBUG
+    debugInfoUpdate();
+#endif
+
+    // FPS制御
+    m_fps->frameRateCalculator();
+    m_fps->fixedFrameRate(30);
 
     //　ビューの更新処理
     QMatrix4x4 camera;  // カメラを原点に沿って回転させる
@@ -101,10 +107,15 @@ void GLWidget::updateGL()
     m_viewMatrix.setToIdentity();
     m_viewMatrix.lookAt(eye, center, up);
 
+    auto light = m_model->getLight();
+    m_model->setLight(eye, light.La, light.Ld, light.Ls);
+
     // モデルの更新処理
     m_model->setTranslation(m_translation.x(), m_translation.y(), m_translation.z());
     m_model->setRotation(m_angle.x(), m_angle.y(), m_angle.z());
     m_model->setScale(m_scale);
+
+    this->update();
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -119,6 +130,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     int deltaX = event->x() - m_mousePosition.x();
     int deltaY = event->y() - m_mousePosition.y();
 
+    // マウスの右クリックドラッグでカメラ回転
     if (event->buttons() & Qt::RightButton) {
         /* カメラのX方向への回転角度制限 */
         m_cameraAngle.setX(m_cameraAngle.x() - deltaX);
@@ -138,7 +150,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     }
     m_mousePosition = event->pos();
 
-    update();
     event->accept();
 
 }
@@ -155,10 +166,8 @@ void GLWidget::wheelEvent(QWheelEvent *event)
         {
             m_cameraDistance *= 0.9f;
         }
-        update();
     }
     event->accept();
-
 }
 
 bool GLWidget::eventFilter(QObject *obj, QEvent *event)
@@ -208,7 +217,6 @@ bool GLWidget::eventFilter(QObject *obj, QEvent *event)
         {
             m_scale += 0.1f;
         }
-        update();
         break;
     default:
         break;
@@ -246,10 +254,17 @@ void GLWidget::debugInfoUpdate()
     float scale = (m_scale == 0.0f) ? 0.0f : m_scale * 100.0f;
 
     m_info.fps->setText(QString("FPS %1").arg(m_fps->getFps()));
-    m_info.translation->setText(QString("Translation X:%1, Y:%2, Z:%3").arg(m_translation.x()).arg(m_translation.y()).arg(m_translation.z()));
-    m_info.rotation->setText(QString("Rotation X:%1, Y:%2, Z:%3").arg(m_angle.x()).arg(m_angle.y()).arg(m_angle.z()));
-    m_info.scale->setText(QString("Scale %1%").arg(scale));
-    m_info.mouse->setText(QString("Mouse X:%1, Y:%2, Z:%3").arg(m_cameraAngle.x()).arg(m_cameraAngle.y()).arg(m_cameraDistance));
-
-    update();
+    m_info.translation->setText(QString("Translation X:%1, Y:%2, Z:%3")
+                                .arg(static_cast<double>(m_translation.x()))
+                                .arg(static_cast<double>(m_translation.y()))
+                                .arg(static_cast<double>(m_translation.z())));
+    m_info.rotation->setText(QString("Rotation X:%1, Y:%2, Z:%3")
+                             .arg(static_cast<double>(m_angle.x()))
+                             .arg(static_cast<double>(m_angle.y()))
+                             .arg(static_cast<double>(m_angle.z())));
+    m_info.scale->setText(QString("Scale %1%").arg(static_cast<double>(scale)));
+    m_info.mouse->setText(QString("Camera X:%1, Y:%2, Z:%3")
+                          .arg(static_cast<double>(m_cameraAngle.x()))
+                          .arg(static_cast<double>(m_cameraAngle.y()))
+                          .arg(static_cast<double>(m_cameraDistance)));
 }
