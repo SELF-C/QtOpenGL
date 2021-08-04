@@ -13,7 +13,7 @@ struct Triangle3D
 {
     QVector3D p1, p2, p3;
     QVector3D p2Normal, p1Normal, p3Normal;
-    QVector2D p1UV, p2UV, p3UV;
+    QVector2D p1TexCoord, p2TexCoord, p3TexCoord;
 };
 
 class WavefrontOBJ
@@ -85,9 +85,9 @@ public:
 
                     if(vt.count() > 0) // UV座標があるか確認
                     {
-                        triangle.p1UV = vt.at(lineParts.at(1).split("/").at(1).toInt() - 1);
-                        triangle.p2UV = vt.at(lineParts.at(2).split("/").at(1).toInt() - 1);
-                        triangle.p3UV = vt.at(lineParts.at(3).split("/").at(1).toInt() - 1);
+                        triangle.p1TexCoord = vt.at(lineParts.at(1).split("/").at(1).toInt() - 1);
+                        triangle.p2TexCoord = vt.at(lineParts.at(2).split("/").at(1).toInt() - 1);
+                        triangle.p3TexCoord = vt.at(lineParts.at(3).split("/").at(1).toInt() - 1);
                     }
 
                     // 法線位置を取得

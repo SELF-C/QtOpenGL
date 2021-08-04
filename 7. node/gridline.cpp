@@ -15,12 +15,12 @@ GridLine::GridLine()
 void GridLine::bufferInit()
 {
     // 頂点情報をVBOに転送する
-    getVertex() = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    getVertex().create();
-    getVertex().setUsagePattern(QOpenGLBuffer::StaticDraw);
-    getVertex().bind();
-    getVertex().allocate(getVertices().constData(), getVertices().size() * static_cast<int>(sizeof(QVector3D)));
-    getVertex().release();
+    getVbo() = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    getVbo().create();
+    getVbo().setUsagePattern(QOpenGLBuffer::StaticDraw);
+    getVbo().bind();
+    getVbo().allocate(getVertices().constData(), getVertices().size() * static_cast<int>(sizeof(VertexData)));
+    getVbo().release();
 
     // シェーダーで使用する属性の設定
     getShaderProgram()->bind();
@@ -34,36 +34,38 @@ void GridLine::gemGridLine()
     float start = -m_width;
     float end = m_width;
 
-    QVector<QVector3D> vertices;
+    QVector<VertexData> vertices;
+    auto normal = QVector3D(0.0f, 0.0f, 0.0f);
+    auto texCoord = QVector2D(0.0f, 0.0f);
 
     // Axis X
     m_axisX.first = vertices.size();
-    vertices.append(QVector3D(start, 0.0f, 0.0f));
-    vertices.append(QVector3D(end, 0.0f, 0.0f));
+    vertices.append(VertexData{ QVector3D(start, 0.0f, 0.0f), normal, texCoord });
+    vertices.append(VertexData{ QVector3D(end, 0.0f, 0.0f), normal, texCoord });
     m_axisX.count = vertices.size();
 
     // Axis Z
     m_axisZ.first = vertices.size();
-    vertices.append(QVector3D(0.0f, 0.0f, start));
-    vertices.append(QVector3D(0.0f, 0.0f, end));
+    vertices.append(VertexData{ QVector3D(0.0f, 0.0f, start), normal, texCoord });
+    vertices.append(VertexData{ QVector3D(0.0f, 0.0f, end), normal, texCoord });
     m_axisZ.count = vertices.size();
 
     // X軸のライン
     for (int i = 1; i < m_width; i++) {
         float z = i * m_gap;
-        vertices.append(QVector3D(start, 0.0f, z));
-        vertices.append(QVector3D(end, 0.0f, z));
-        vertices.append(QVector3D(start, 0.0f, -z));
-        vertices.append(QVector3D(end, 0.0f, -z));
+        vertices.append(VertexData{ QVector3D(start, 0.0f, z), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(end, 0.0f, z), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(start, 0.0f, -z), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(end, 0.0f, -z), normal, texCoord });
     }
 
     // Z軸のライン
     for (int i = 1; i < m_width; i++) {
         float x = i * m_gap;
-        vertices.append(QVector3D(x, 0.0f, start));
-        vertices.append(QVector3D(x, 0.0f, end));
-        vertices.append(QVector3D(-x, 0.0f, start));
-        vertices.append(QVector3D(-x, 0.0f, end));
+        vertices.append(VertexData{ QVector3D(x, 0.0f, start), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(x, 0.0f, end), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(-x, 0.0f, start), normal, texCoord });
+        vertices.append(VertexData{ QVector3D(-x, 0.0f, end), normal, texCoord });
     }
 
     setVertices(vertices);
@@ -82,10 +84,10 @@ void GridLine::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMa
     glLineWidth(1.5f);
 
     // Draw Gridline
-    getVertex().bind();
+    getVbo().bind();
 
     getShaderProgram()->enableAttributeArray("VertexPosition");
-    getShaderProgram()->setAttributeBuffer("VertexPosition", GL_FLOAT, 0, 3);
+    getShaderProgram()->setAttributeBuffer("VertexPosition", GL_FLOAT, 0, 3, sizeof(VertexData));
 
     glDrawArrays(GL_LINES, 4, getVertices().size());
 
@@ -97,8 +99,7 @@ void GridLine::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMa
     getShaderProgram()->setUniformValue("VertexColor", m_color.axisZ);
     glDrawArrays(GL_LINES, m_axisZ.first, m_axisZ.count);
 
-
-    getVertex().release();
+    getVbo().release();
     getShaderProgram()->release();
 }
 

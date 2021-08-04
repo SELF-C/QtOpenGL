@@ -3,7 +3,6 @@
 
 Model::Model()
 {
-    initializeOpenGLFunctions();
     initialize();
 }
 
@@ -16,18 +15,14 @@ Model::~Model()
     m_shaderProgram=nullptr;
 
     // VBO release
-    m_vbo.vertex.release();
-    m_vbo.vertex.destroy();
-
-    m_vbo.normal.release();
-    m_vbo.normal.destroy();
-
-    m_vbo.uv.release();
-    m_vbo.uv.destroy();
+    m_vbo.release();
+    m_vbo.destroy();
 }
 
 void Model::initialize()
 {
+    initializeOpenGLFunctions();
+
     // メッシュデータの初期設定
     m_transform.rotation = QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 0.0f, 0.0f), 0.0f);
     m_transform.translation = QVector3D(0.0f, 0.0f, 0.0f);
@@ -59,26 +54,15 @@ bool Model::load(const QString &filename)
         return false;
 
     m_vertices.clear();
-    m_normals.clear();
-    m_uvs.clear();
     m_comments.clear();
 
     for(int i = 0; i < triangles.count(); i++)
     {
-        m_vertices.append(triangles.at(i).p1);
-        m_vertices.append(triangles.at(i).p2);
-        m_vertices.append(triangles.at(i).p3);
-
-        m_normals.append(triangles.at(i).p1Normal);
-        m_normals.append(triangles.at(i).p2Normal);
-        m_normals.append(triangles.at(i).p3Normal);
+        m_vertices.append(VertexData{ triangles.at(i).p1, triangles.at(i).p1Normal, triangles.at(i).p1TexCoord });
+        m_vertices.append(VertexData{ triangles.at(i).p2, triangles.at(i).p2Normal, triangles.at(i).p2TexCoord });
+        m_vertices.append(VertexData{ triangles.at(i).p3, triangles.at(i).p3Normal, triangles.at(i).p3TexCoord });
     }
     m_comments = comments;
-
-    qDebug() << m_vertices.toList();
-    qDebug() << "m_normals";
-    qDebug() << m_normals.size();
-    qDebug() << m_normals.toList();
 
     return true;
 }
@@ -103,28 +87,12 @@ void Model::shaderInit(const QString &vertexShaderFile, const QString &fragmentS
 void Model::bufferInit()
 {
     // 頂点情報をVBOに転送する
-    m_vbo.vertex = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    m_vbo.vertex.create();
-    m_vbo.vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_vbo.vertex.bind();
-    m_vbo.vertex.allocate(m_vertices.constData(), m_vertices.size() * static_cast<int>(sizeof(QVector3D)));
-    m_vbo.vertex.release();
-
-    // 法線情報をVBOに転送する
-    m_vbo.normal = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    m_vbo.normal.create();
-    m_vbo.normal.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_vbo.normal.bind();
-    m_vbo.normal.allocate(m_normals.constData(), m_normals.size() * static_cast<int>(sizeof(QVector3D)));
-    m_vbo.normal.release();
-
-    //　テクスチャマッピングをVBOに転送する
-    m_vbo.uv = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    m_vbo.uv.create();
-    m_vbo.uv.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    m_vbo.uv.bind();
-    m_vbo.uv.allocate(m_uvs.constData(), m_uvs.size() * static_cast<int>(sizeof(QVector3D)));
-    m_vbo.uv.release();
+    m_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    m_vbo.create();
+    m_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    m_vbo.bind();
+    m_vbo.allocate(m_vertices.constData(), m_vertices.size() * static_cast<int>(sizeof(VertexData)));
+    m_vbo.release();
 
     // シェーダーで使用する属性の設定
     m_shaderProgram->bind();
@@ -165,18 +133,19 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
     m_shaderProgram->setUniformValue("NormalMatrix", modelMatrix.normalMatrix());
     m_shaderProgram->setUniformValue("MVP", projectionMatrix * viewMatrix * modelMatrix);
 
-    m_vbo.vertex.bind();
-    m_shaderProgram->enableAttributeArray("VertexPosition");
-    m_shaderProgram->setAttributeBuffer("VertexPosition", GL_FLOAT, 0, 3);
+    m_vbo.bind();
 
-    m_vbo.normal.bind();
+    int offset = 0;
+    m_shaderProgram->enableAttributeArray("VertexPosition");
+    m_shaderProgram->setAttributeBuffer("VertexPosition", GL_FLOAT, offset, 3, sizeof(VertexData));
+
+    offset += sizeof(QVector3D);
     m_shaderProgram->enableAttributeArray("VertexNormal");
-    m_shaderProgram->setAttributeBuffer("VertexNormal", GL_FLOAT, 0, 3);
+    m_shaderProgram->setAttributeBuffer("VertexNormal", GL_FLOAT, offset, 3, sizeof(VertexData));
 
     glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
 
-    m_vbo.normal.release();
-    m_vbo.vertex.release();
+    m_vbo.release();
     m_shaderProgram->release();
 }
 
@@ -224,34 +193,24 @@ void Model::setShaderProgram(QOpenGLShaderProgram *shaderProgram)
     m_shaderProgram = shaderProgram;
 }
 
-QVector<QVector3D> Model::getVertices() const
+QVector<Model::VertexData> Model::getVertices() const
 {
     return m_vertices;
 }
 
-void Model::setVertices(const QVector<QVector3D> &vertices)
+void Model::setVertices(const QVector<VertexData> &vertices)
 {
     m_vertices = vertices;
 }
 
-QVector<QVector3D> Model::getNormals() const
+QOpenGLBuffer Model::getVbo() const
 {
-    return m_normals;
+    return m_vbo;
 }
 
-void Model::setNormals(const QVector<QVector3D> &normals)
+void Model::setVbo(const QOpenGLBuffer &vbo)
 {
-    m_normals = normals;
-}
-
-QVector<QVector2D> Model::getUvs() const
-{
-    return m_uvs;
-}
-
-void Model::setUvs(const QVector<QVector2D> &uvs)
-{
-    m_uvs = uvs;
+    m_vbo = vbo;
 }
 
 QStringList Model::getComments() const
@@ -262,36 +221,6 @@ QStringList Model::getComments() const
 void Model::setComments(const QStringList &comments)
 {
     m_comments = comments;
-}
-
-QOpenGLBuffer Model::getVertex() const
-{
-    return m_vbo.vertex;
-}
-
-void Model::setVertex(const QOpenGLBuffer &vertex)
-{
-    m_vbo.vertex = vertex;
-}
-
-QOpenGLBuffer Model::getNormal() const
-{
-    return m_vbo.normal;
-}
-
-void Model::setNormal(const QOpenGLBuffer &normal)
-{
-    m_vbo.normal = normal;
-}
-
-QOpenGLBuffer Model::getUv() const
-{
-    return m_vbo.uv;
-}
-
-void Model::setUv(const QOpenGLBuffer &uv)
-{
-    m_vbo.uv = uv;
 }
 
 Model::Light Model::getLight() const
