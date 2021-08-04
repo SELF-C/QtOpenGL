@@ -37,6 +37,7 @@ private:
     };
 
     // grid
+    QVector<QVector3D> m_vertices;
     float m_width;
     float m_gap;
     Color m_color;
