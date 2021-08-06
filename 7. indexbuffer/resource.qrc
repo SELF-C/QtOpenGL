@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shader.frag</file>
+        <file>shader.vert</file>
+        <file>gridline.frag</file>
+        <file>gridline.vert</file>
+        <file>cube.obj</file>
+        <file>cylinder.obj</file>
+        <file>sphere.obj</file>
+    </qresource>
+</RCC>
