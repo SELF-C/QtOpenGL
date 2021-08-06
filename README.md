@@ -14,3 +14,6 @@ Qt 5でOpenGLを使う
 
 + https://ghorwin.github.io/OpenGLWithQt-Tutorial/
 
+基礎知識
+
+https://wgld.org/d/webgl/
