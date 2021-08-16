@@ -55,7 +55,8 @@ public:
     virtual void bind(const QString &vertexShader, const QString &fragmentShader);
     virtual void update();
     virtual void draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatrix, const QMatrix4x4 &parentModelMatrix=QMatrix4x4());
-    virtual void addChild(Model*);
+    virtual void addChild(Model* child);
+    virtual void setChild(int index, Model* child);
 
     virtual void setRotation(QQuaternion rotation);
     virtual void setTranslation(QVector3D translation);
@@ -111,8 +112,7 @@ private:
     bool m_enabled;
 
     // Node
-    Model** m_children;
-    int m_childNumber;
+    QVector<Model*> m_children;
 
     virtual void shaderInit(const QString &vertexShaderFile, const QString &fragmentShaderFile);
     virtual void bufferInit();

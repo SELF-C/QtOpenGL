@@ -17,6 +17,7 @@
 #include "model.h"
 #include "gridline.h"
 #include "fpsmanager.h"
+#include "gldebug.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -37,13 +38,11 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
-    struct DebugInfo
+    struct Transform
     {
-        QLabel* fps;
-        QLabel* translation;
-        QLabel* rotation;
-        QLabel* scale;
-        QLabel* mouse;
+        QVector3D angle;
+        QVector3D translation;
+        float scale = 1;
     };
 
     QMatrix4x4 m_projectionMatrix;
@@ -57,19 +56,14 @@ private:
 
     GridLine* m_gridline;
     QVector<Model*> m_model;
-    int m_activeModelIndex;
+    int m_activeModelIndex = 0;
 
-    QVector3D m_angle;
-    QVector3D m_translation;
-    float m_scale;
+    QVector<Transform> m_transform;
 
     FpsManager* m_fps;
 
     // Debug
-    DebugInfo m_info;
-
-    void debugInfoInit();
-    void debugInfoUpdate();
+    GLDebug* m_gldebug;
 };
 
 #endif // GLWIDGET_H

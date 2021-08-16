@@ -24,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     fpsmanager.h \
+    gldebug.h \
     glwidget.h \
     gridline.h \
     mainwindow.h \

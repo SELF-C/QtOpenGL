@@ -34,7 +34,6 @@ void Model::initialize()
     // ステータス
     m_created = false;
     m_enabled = true;
-    m_childNumber = 0;
 
     m_shaderProgram = new QOpenGLShaderProgram();
 }
@@ -148,7 +147,7 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
     modelMatrix.translate(m_translation);
     modelMatrix.rotate(m_rotation);
     modelMatrix.scale(m_scale);
-    modelMatrix = modelMatrix * parentModelMatrix;
+    modelMatrix = parentModelMatrix * modelMatrix;
 
     // Draw
     if ( m_enabled )
@@ -185,14 +184,24 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
         m_shaderProgram->release();
     }
 
-    for (int i = 0; i < m_childNumber; ++i) {
+    for (int i = 0; i < m_children.size(); ++i) {
         m_children[i]->draw(projectionMatrix, viewMatrix, modelMatrix);
     }
 }
 
-void Model::addChild(Model *)
+void Model::setChild(int index, Model* child)
 {
+    if(m_children.size() < index && 0 > index)
+    {
+        qDebug() << "index out of range";
+        return;
+    }
+    m_children[index] = child;
+}
 
+void Model::addChild(Model* child)
+{
+    m_children.append(child);
 }
 
 void Model::setRotation(QQuaternion rotation)
