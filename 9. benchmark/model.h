@@ -23,13 +23,6 @@ public:
         int getTexCoordOffset(){ return sizeof(QVector3D) + sizeof(QVector2D);}
     };
 
-    struct Transform
-    {
-        QQuaternion rotation;
-        QVector3D translation;
-        float scale;
-    };
-
     struct Light
     {
         QVector4D Position; // 視点座標でのライトの位置
@@ -67,15 +60,15 @@ public:
     virtual void setMaterial(QVector3D Ka, QVector3D Kd, QVector3D Ks, float shininess);
     virtual void setOpacity(float opacity);
 
+    virtual QVector3D getTranslation();
+
     QVector<VertexData> getVertices() const;
     void setVertices(const QVector<VertexData> &vertices);
     Light getLight() const;
     Material getMaterial() const;
 
-    bool getEnabled() const;
-    void setEnabled(bool enabled);
-
-
+    bool getVisible() const;
+    void setVisible(bool visible);
 
 protected:
     QOpenGLShaderProgram *getShaderProgram() const;
@@ -110,8 +103,7 @@ private:
     Material m_material;
 
     // status
-    bool m_created;
-    bool m_enabled;
+    bool m_visible;
 
     // Node
     QVector<Model*> m_children;

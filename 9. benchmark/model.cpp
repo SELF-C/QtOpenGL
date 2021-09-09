@@ -33,8 +33,7 @@ void Model::initialize()
     m_material.Opacity = 1.0f;
 
     // ステータス
-    m_created = false;
-    m_enabled = true;
+    m_visible = true;
 
     m_shaderProgram = new QOpenGLShaderProgram();
 }
@@ -152,7 +151,7 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
     modelMatrix = parentModelMatrix * modelMatrix;
 
     // Draw
-    if ( m_enabled )
+    if ( m_visible )
     {
         m_shaderProgram->bind();
 
@@ -173,12 +172,14 @@ void Model::draw(const QMatrix4x4 &projectionMatrix, const QMatrix4x4 &viewMatri
         m_ibo.bind();
 
         int offset = 0;
-        m_shaderProgram->enableAttributeArray("VertexPosition");
-        m_shaderProgram->setAttributeBuffer("VertexPosition", GL_FLOAT, offset, 3, sizeof(VertexData));
+        int vertexLocation = m_shaderProgram->attributeLocation("VertexPosition");
+        m_shaderProgram->enableAttributeArray(vertexLocation);
+        m_shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
 
         offset += sizeof(QVector3D);
-        m_shaderProgram->enableAttributeArray("VertexNormal");
-        m_shaderProgram->setAttributeBuffer("VertexNormal", GL_FLOAT, offset, 3, sizeof(VertexData));
+        int vertexNormalLocation = m_shaderProgram->attributeLocation("VertexNormal");
+        m_shaderProgram->enableAttributeArray(vertexNormalLocation);
+        m_shaderProgram->setAttributeBuffer(vertexNormalLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
 
         glDrawElements(GL_TRIANGLES, m_indexes.size(), GL_UNSIGNED_SHORT, nullptr);
 
@@ -248,6 +249,11 @@ void Model::setOpacity(float opacity)
     m_material.Opacity = opacity;
 }
 
+QVector3D Model::getTranslation()
+{
+    return m_translation;
+}
+
 QOpenGLShaderProgram *Model::getShaderProgram() const
 {
     return m_shaderProgram;
@@ -288,14 +294,14 @@ void Model::setComments(const QStringList &comments)
     m_comments = comments;
 }
 
-bool Model::getEnabled() const
+bool Model::getVisible() const
 {
-    return m_enabled;
+    return m_visible;
 }
 
-void Model::setEnabled(bool enabled)
+void Model::setVisible(bool visible)
 {
-    m_enabled = enabled;
+    m_visible = visible;
 }
 
 QOpenGLBuffer Model::getIbo() const
